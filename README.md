@@ -15,7 +15,7 @@ Open a terminal in the osc4ws directory and type:
 
 ## start
 
-`node main.js`
+`node src/main.js`
 
 After starting up, it should prompt you to define a port number for the WebSocket server and then a port number for the OSC connection. Then hopefully something like this will display
 
