@@ -2,7 +2,10 @@ import osc from "osc"
 import {internalIpV4Sync} from "internal-ip";
 import Colors from "colors/safe.js";
 import os from "os";
-import {sendOSCtoSocket} from './ws4osc.js'
+import {sendOSCtoSocket} from './ws4osc.js';
+import Message from "./message.js";
+import colors from "colors/safe.js";
+
 
 
 /****************
@@ -36,13 +39,15 @@ const osc4ws = {
     start: function ( port ) {
         this._UDPPort = new osc.UDPPort({
             localAddress: internalIpV4Sync(),
-            localPort: port
+            localPort: port,
+            metadata: true
         });
         try {this._UDPPort.open()} catch (e) { console.log(Colors.zebra('Cannot open UDP...'+e))};
         this.initialise()
     },
 
     initialise: function ( _UDPPort = this._UDPPort ) {
+        // Listen for port ready
         _UDPPort.on("ready",  () => {
             let ipAddresses = this.getIPAddresses();
             console.log( Colors.bgCyan("Listening for OSC over UDP."));
@@ -51,11 +56,40 @@ const osc4ws = {
             });
         });
 
-        // Listen for incoming OSC messages.
+        /**
+         * Listen for incoming OSC messages
+         * Rewrite into a simple container
+         * for Cables.gl operators - Message can be
+         * re-written anyway though...
+         *
+         **/
+
         _UDPPort.on("message",  (oscMsg, timeTag, info) => {
-            this._latestIncomingUDP = oscMsg;
-            console.log("UDP OSC in: ", Colors.dim(oscMsg));
-            sendOSCtoSocket( this._latestIncomingUDP );
+            Object.assign(  this._latestIncomingUDP , { message: oscMsg, timeTag: timeTag} );
+
+            const {address, args} = oscMsg;
+            let data = [];
+            for (const arg of args) {
+                const {type, value} = arg;
+
+                switch (type) {
+                    case 'f':
+                        data.push( Number(value) );
+                        break;
+                    case 'i':
+                        data.push ( Math.round(Number(value)) );
+                        break;
+                    case 's':
+                        data.push( value.toString() );
+                        break;
+                    case 'b':
+                        value.arrayBuffer().then(buffer => data = buffer); // should this be an array of arrays?
+                        break;
+                    default:
+                        data.push( value )
+                }
+            }
+            sendOSCtoSocket( new Message(''+ address, data ) );
         });
 
         // Listen for oops
