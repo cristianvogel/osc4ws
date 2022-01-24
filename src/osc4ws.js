@@ -4,7 +4,6 @@ import Colors from "colors/safe.js";
 import os from "os";
 import {sendOSCtoSocket} from './ws4osc.js';
 import Message from "./message.js";
-import colors from "colors/safe.js";
 
 
 
@@ -14,83 +13,106 @@ import colors from "colors/safe.js";
 
 const osc4ws = {
 
-    _oscSendPort: 9005,
-    _UDPPort: {},
-    _latestIncomingUDP: '',
+    _UDPTransport: {},
+    latestIncomingUDP: {},
 
-    getIPAddresses: function () {
+    sendOSCtoUDP: function ( msg ) {
 
-        const  interfaces = os.networkInterfaces();
-        let  ipAddresses = [];
+         //   console.log(Colors.dim(`sending ${msg.address}`));
+            this._UDPTransport.send(msg);
+    },
 
-        for (let deviceName in interfaces) {
+    start: function ( options ) {
 
-            const addresses = interfaces[deviceName];
-            for (let i = 0; i < addresses.length; i++) {
-                const addressInfo = addresses[i];
-                if (addressInfo.family === "IPv4" && !addressInfo.internal) {
-                    ipAddresses.push(addressInfo.address);
-                }
+            options = { ...options, metadata: true};
+            this._UDPTransport = new osc.UDPPort( options );
+            try {
+                this._UDPTransport.open()
+            } catch (e) {
+                console.log(Colors.zebra('Cannot open UDP transport for OSC communication...' + e))
+                return undefined
             }
-        }
-        return ipAddresses;
+
+            this.initialise(this._UDPTransport);
+            return this._UDPTransport
     },
 
-    start: function ( port ) {
-        this._UDPPort = new osc.UDPPort({
-            localAddress: internalIpV4Sync(),
-            localPort: port,
-            metadata: true
-        });
-        try {this._UDPPort.open()} catch (e) { console.log(Colors.zebra('Cannot open UDP...'+e))};
-        this.initialise()
-    },
+    initialise:  function ( _UDPPort ) {
 
-    initialise: function ( _UDPPort = this._UDPPort ) {
-        // Listen for port ready
+         if (_UDPPort === undefined ) return;
+         const p = _UDPPort.options;
         _UDPPort.on("ready",  () => {
-            let ipAddresses = this.getIPAddresses();
-            console.log( Colors.bgCyan("Listening for OSC over UDP."));
-            ipAddresses.forEach(function (address) {
-                console.log(Colors.bgCyan(" Host:" + address + ", Port:" + _UDPPort.options.localPort));
+            console.log ( Colors.green( 'Ready for OSC over UDP.'));
+            console.log ( 'Send to remote: '+ p.remoteAddress + ':'+ p.remotePort  );
+            console.log ( 'Listen on: '+ p.localAddress + ':'+ p.localPort  )
             });
-        });
+
 
         /**
-         * Listen for incoming OSC messages
-         * Rewrite into a simple container
-         * for Cables.gl operators - Message can be
-         * re-written anyway though...
+         * Listen for incoming OSC messages if transport is a receiver
+         * Plug OSC into a simple Message container
+         * for forwarding to the Websocket.
          *
+         * ignore incoming timeTag: timeTag for now
+         *
+         * Also grab some info about the sender stored in this
+         * instance of osc4ws, create an additional getter for a loopback
+         * which is a different port same IP
+         * by convention the sender port number offset by -1
+         * idea is to help mitigate OSC feedback loops
          **/
 
-        _UDPPort.on("message",  (oscMsg, timeTag, info) => {
-            Object.assign(  this._latestIncomingUDP , { message: oscMsg, timeTag: timeTag} );
 
-            const {address, args} = oscMsg;
-            let data = [];
-            for (const arg of args) {
-                const {type, value} = arg;
+            _UDPPort.on("message", (oscMsg, timeTag, info) => {
+                /**
+                 * only update stored client info if it has changed
+                 * **/
 
-                switch (type) {
-                    case 'f':
-                        data.push( Number(value) );
-                        break;
-                    case 'i':
-                        data.push ( Math.round(Number(value)) );
-                        break;
-                    case 's':
-                        data.push( value.toString() );
-                        break;
-                    case 'b':
-                        value.arrayBuffer().then(buffer => data = buffer); // should this be an array of arrays?
-                        break;
-                    default:
-                        data.push( value )
+                if (!(this.latestIncomingUDP.fromIP === info.address ||
+                    this.latestIncomingUDP.fromPort === info.port)) {
+
+                    const clientInfoObj = {
+                        fromIP: info.address,
+                        fromPort: info.port,
+                        loopBackOffset: -1,
+                        loopBackPort: this.fromPort - this.loopBackOffset
+                    };
+
+                    this.latestIncomingUDP = {...clientInfoObj};
+                    console.log(Colors.italic('Got OSC data from: ' + this.latestIncomingUDP.fromIP + ' on port ' + this.latestIncomingUDP.fromPort));
+
                 }
-            }
-            sendOSCtoSocket( new Message(''+ address, data ) );
-        });
+                /**
+                 Parse OSC { address, [args] }
+                 Args might be a bundle, so iterate through the list
+                 OSC can be 'f' float 'i' int 's' string or 'b' blob
+                 **/
+                const {address, args} = oscMsg;
+                //console.log( address , args );
+                let data = [];
+                for (const arg of args) {
+                    const {type, value} = arg;
+
+                    switch (type) {
+                        case 'f':
+                            data.push(Number(value));
+                            break;
+                        case 'i':
+                            data.push(Math.round(Number(value)));
+                            break;
+                        case 's':
+                            data.push(value.toString());
+                            break;
+                        case 'b':
+                            value.arrayBuffer().then(buffer => data = buffer); // should this be an array of arrays?
+                            break;
+                        default:
+                            data.push(value)
+                    }
+                }
+                //send parsed OSC to WebSocket
+                sendOSCtoSocket(new Message('' + address, data));
+            });
 
         // Listen for oops
         _UDPPort.on("error", function (err) {
@@ -99,4 +121,5 @@ const osc4ws = {
     }
 }
 
+export const sendOSCtoUDP = osc4ws.sendOSCtoUDP.bind(osc4ws);
 export default osc4ws;

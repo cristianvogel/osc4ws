@@ -1,11 +1,12 @@
 import WebSocket, {WebSocketServer} from 'ws';
 import Colors from 'colors/safe.js';
+import {sendOSCtoUDP} from "./osc4ws.js";
 
 
 const ws4osc = {
 
     wss: {},
-    latestIncomingWSMessage: '',
+    latestIncomingWS: null,
     connectedWSClients: [],
 
     start: function ( _port ) {
@@ -33,16 +34,29 @@ const ws4osc = {
         });
     },
 
+    parseIncomingOSC: function ( data ){
+        const incomingOSC = JSON.parse(data.toString());
+        sendOSCtoUDP( incomingOSC );
+    },
+
     initialise: function( ) {
 
         if ( this.wss === undefined ) return;
         const { wss } = this;
+
         const handleIncoming = ( event ) => {
-            console.log(Colors.dim('Websocket client ▶︎' + event))
-            this.latestIncomingWSMessage = event.toString();
-            this.updateWebSocketClients();
+            const {  latestIncomingWS: curr } = this;
+            if( Date.now() % 10000 < 100) this.updateWebSocketClients(); // todo: replace this check with WS ping/pong
+            if ( curr !== event ) {
+                this.latestIncomingWS = event;
+                this.parseIncomingOSC ( event );
+            }
         };
-        // Connection opened, handshake with new client
+
+        /**
+         * Connection opened, touch elbows with new client
+         * because handshaking is not advised during pandemic
+         */
         wss.on('connection', function connection(ws) {
                 ws.on('message', handleIncoming);
                 ws.send(JSON.stringify({ message: 'Elbows!'}));
@@ -70,6 +84,6 @@ const ws4osc = {
         return this.connectedWSClients;
     }
 };
-let updatedClientSet = ws4osc.updateWebSocketClients.bind(ws4osc);
+
 export const sendOSCtoSocket = ws4osc.sendJSONToWSClient.bind(ws4osc);
 export default ws4osc;

@@ -3,24 +3,44 @@ import ws4osc from './ws4osc.js';
 import Colors from 'colors/safe.js';
 import prompt from 'prompt-sync';
 import osc4ws from './osc4ws.js';
+import {internalIpV4Sync} from "internal-ip";
 
 
-function userSetWebSocketPort() {
+function userSetWebSocketPort( text = '' ) {
     const wsPortChoice = prompt()(
-         Colors.bgGreen(`🎛 Enter WEBSOCKET port (7000-12000) or press return for default port 8005:`), '8005');
+         Colors.bgGreen('👾 '+text+' ▶︎ Enter WEBSOCKET port (7000-12000) or press return for default port:'), '8005');
     return Number(wsPortChoice);
 }
 
-function userSetOSCPort(){
+function userSetLocalOSCPort( text = ''){
     const oscPortChoice = prompt()(
-        Colors.bgBlue(`🎛 Enter OSC port (7000-12000) or press return for default port 9005:`), '9005');
+        Colors.bgBlue('🎛 '+text+' ▶︎ Enter listen OSC port (7000-12000) or press return for default port:'), '9005');
     return Number(oscPortChoice);
+}
+
+function userSetRemoteOSCTarget( text = ''){
+    let target = prompt()(
+        Colors.bgCyan('🎛 '+text+' ▶︎ Enter remote OSC IP address and port (eg. 192.155.0.53:9090) or press return:'), undefined );
+    if (target!=='') {
+        const sep = target.split(':');
+        target = { address: sep[0], port: sep[1] }
+    } else { target = { address: 'localhost', port: '13755' } };
+    return target;
 }
 
 ws4osc.start(userSetWebSocketPort());
 ws4osc.initialise();
-osc4ws.start(userSetOSCPort());
+const userDefinedListenerPort = userSetLocalOSCPort( 'Hello: ');
+const userDefinedRemoteTarget = userSetRemoteOSCTarget( 'Thankyou: ');
+const options = {
+        remoteAddress: userDefinedRemoteTarget.address,
+        remotePort: userDefinedRemoteTarget.port,
+        localAddress: internalIpV4Sync(),
+        localPort: userDefinedListenerPort
+    };
 
+const oscOverUDP = osc4ws.start( options );
+if ( oscOverUDP === undefined) process.exit(0)
 // --------------------------------------
 
 
