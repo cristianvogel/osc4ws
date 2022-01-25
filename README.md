@@ -20,9 +20,15 @@ Open a terminal in the osc4ws directory and type:
 After starting up, it should prompt you to define a port number for the WebSocket server and then a port number for the OSC connection. Then hopefully something like this will display
 
 ```
-Local IP: 192.168.1.169
-Starting websocket server on port 8005
-Starting OSC receiver on port 9005
+👾  ▶︎ Enter WEBSOCKET port (7000-12000) or press return for default port:
+🎛 Hello:  ▶︎ Enter listen OSC port (7000-12000) or press return for default port:
+🎛 Thankyou:  ▶︎ Enter remote OSC IP address and port (eg. 192.155.0.53:9090) or press return:172.20.10.4:9005
+Ready for OSC over UDP.
+Send to remote: 172.20.10.4:9005
+Listen on: 172.20.10.2:9005
+Websocket connected on port 8005
+Got OSC data from: 172.20.10.4 on port 9004
+
 ```
 
 Now connect your websocket to `ws://localhost:8005`<br>
