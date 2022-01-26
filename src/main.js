@@ -4,7 +4,7 @@ import Colors from 'colors/safe.js';
 import prompt from 'prompt-sync';
 import osc4ws from './osc4ws.js';
 import {internalIpV4Sync} from "internal-ip";
-
+import  dnssd from 'dnssd';
 
 function userSetWebSocketPort( text = '' ) {
     const wsPortChoice = prompt()(
@@ -40,7 +40,25 @@ const options = {
     };
 
 const oscOverUDP = osc4ws.start( options );
-if ( oscOverUDP === undefined) process.exit(0)
+
+
+if ( oscOverUDP === undefined) process.exit(0);
+
+/**
+ advertise the osc service for zero-conf compatible dnssd setup
+ ws4osc will become a nearby service which can be easily connected to in one click
+ for example TouchOSC or OSCulator see the service on the local network as 'ws4osc'
+ **/
+
+const advertiseService = dnssd.Advertisement (
+    '_osc._udp',
+    options.localPort,
+    {
+        name: 'osc4ws' ,
+        host: options.localAddress
+    }).start();
+
+
 // --------------------------------------
 
 

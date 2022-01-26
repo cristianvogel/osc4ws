@@ -6,6 +6,7 @@
   "type": "module",
   "dependencies": {
     "colors": "^1.4.0",
+    "dnssd": "^0.4.1",
     "internal-ip": "^7.0.0",
     "osc": "^2.4.2",
     "prompt-sync": "^4.1.6",
