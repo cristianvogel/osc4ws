@@ -15,7 +15,7 @@ Open a terminal in the osc4ws directory and type:
 
 ## start
 
-`node main.js`
+`node src/main.js`
 
 After starting up, it should prompt you to define a port number for the WebSocket server and then a port number for the OSC connection. Then hopefully something like this will display
 
@@ -32,7 +32,7 @@ Got OSC data from: 172.20.10.4 on port 9004
 ```
 
 Now connect your websocket to `ws://localhost:8005`<br>
-Send OSC data to your local IP address and use port 9005<br>
-eg : `192.168.1.169:9005`
+Send OSC data from a client or device to your local listen IP address and port<br>
+eg : `172.20.10.2:9005`
 
 This [video tutorial](https://www.youtube.com/watch?v=1cIhDfrHM74&feature=youtu.be) shows the whole process for the original [osc2ws](https://github.com/pandrr/osc2ws) version sending OSC into [Cables.gl](https://dev.cables.gl) <br>
