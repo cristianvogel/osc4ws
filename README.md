@@ -1,5 +1,6 @@
 # osc4ws
-OSC to WebSocket bidirectional peer to peer proxy based on [osc2ws](https://github.com/pandrr/osc2ws)
+OSC to WebSocket bidirectional peer to peer proxy based on [osc2ws](https://github.com/pandrr/osc2ws).
+Advertises as a `_osc.udp.` service over ZeroConf for one click set-up with ZeroConf/Bonjour compatible clients. 
 
 Sadly, browsers can not receive OSC data. This little tool receives OSC messages and serves them via WebSocket technology using the reliable [websockets/ws](https://github.com/websockets/ws) library.
 You can then use a browser's websocket client to connect to it and receive the data. Use the same socket to send data back to the OSC client. 
