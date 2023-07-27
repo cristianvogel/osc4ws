@@ -8,12 +8,13 @@
     "colors": "^1.4.0",
     "dnssd": "^0.4.1",
     "internal-ip": "^7.0.0",
-    "osc": "^2.4.2",
+    "osc": "^2.4.4",
     "prompt-sync": "^4.1.6",
     "ws": "^8.4.2"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/main.js"
   },
   "author": "",
   "license": "ISC"
