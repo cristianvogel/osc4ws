@@ -1,7 +1,5 @@
 import osc from "osc"
-import {internalIpV4Sync} from "internal-ip";
 import Colors from "colors/safe.js";
-import os from "os";
 import {sendOSCtoSocket} from './ws4osc.js';
 import Message from "./message.js";
 
@@ -18,13 +16,13 @@ const osc4ws = {
 
     sendOSCtoUDP: function ( msg ) {
 
-         //   console.log(Colors.dim(`sending ${msg.address}`));
+            console.log(Colors.dim(`handling ${msg.address}`));
             this._UDPTransport.send(msg);
     },
 
     start: function ( options ) {
 
-            options = { ...options, metadata: true};
+            options = { ...options, metadata: true, broadcast: true};
             this._UDPTransport = new osc.UDPPort( options );
             try {
                 this._UDPTransport.open()
@@ -67,7 +65,6 @@ const osc4ws = {
                 /**
                  * only update stored client info if it has changed
                  * **/
-
                 if (!(this.latestIncomingUDP.fromIP === info.address ||
                     this.latestIncomingUDP.fromPort === info.port)) {
 
@@ -87,8 +84,8 @@ const osc4ws = {
                  Args might be a bundle, so iterate through the list
                  OSC can be 'f' float 'i' int 's' string or 'b' blob
                  **/
-                const {address, args} = oscMsg;
-                //console.log( address , args );
+               const {address, args} = oscMsg;
+                // console.log( address , args );
                 let data = [];
                 for (const arg of args) {
                     const {type, value} = arg;
@@ -104,9 +101,11 @@ const osc4ws = {
                             data.push(value.toString());
                             break;
                         case 'b':
+                            // console.log(Colors.red('OSC blob: ' + type + ' value:' + value));
                             value.arrayBuffer().then(buffer => data = buffer); // should this be an array of arrays?
                             break;
                         default:
+                            console.log(Colors.red('OSC type not supported: ' + type + ' value:' + value));
                             data.push(value)
                     }
                 }
@@ -116,7 +115,7 @@ const osc4ws = {
 
         // Listen for oops
         _UDPPort.on("error", function (err) {
-            console.log( Colors.red(err.toString()));
+            console.log( '(UDP) '+ Colors.red(err.toString()));
         });
     }
 }

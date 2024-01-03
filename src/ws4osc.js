@@ -36,6 +36,7 @@ const ws4osc = {
 
     parseIncomingOSC: function ( data ){
         const incomingOSC = JSON.parse(data.toString());
+        console.log(Colors.dim(`handling ${data}`));
         sendOSCtoUDP( incomingOSC );
     },
 
@@ -74,7 +75,7 @@ const ws4osc = {
     },
 
     close: () => {
-        this.wss.close(1013, 'Closed by osc2ws');
+        this.wss.close(1013, 'Closed by osc4ws');
     },
 
     updateWebSocketClients: function () {

@@ -14,17 +14,17 @@ function userSetWebSocketPort( text = '' ) {
 
 function userSetLocalOSCPort( text = ''){
     const oscPortChoice = prompt()(
-        Colors.bgBlue('🎛 '+text+' ▶︎ Enter listen OSC port (7000-12000) or press return for default port:'), '9005');
+        Colors.bgBlue('🎛 '+text+' ▶︎ Enter local OSC port (7000-12000) or press return for default port:'), '9005');
     return Number(oscPortChoice);
 }
 
 function userSetRemoteOSCTarget( text = ''){
     let target = prompt()(
-        Colors.bgCyan('🎛 '+text+' ▶︎ Enter remote OSC IP address and port (eg. 192.155.0.53:9090) or press return:'), undefined );
+        Colors.bgCyan('🎛 '+text+' ▶︎ Enter remote OSC IP address and port (eg. localhost:9090) or press return:'), undefined );
     if (target!=='') {
         const sep = target.split(':');
         target = { address: sep[0], port: sep[1] }
-    } else { target = { address: 'localhost', port: '13755' } };
+    } else { target = { address: '192.155.0.53', port: '13755' } };
     return target;
 }
 
@@ -35,7 +35,7 @@ const userDefinedRemoteTarget = userSetRemoteOSCTarget( 'Thankyou: ');
 const options = {
         remoteAddress: userDefinedRemoteTarget.address,
         remotePort: userDefinedRemoteTarget.port,
-        localAddress: internalIpV4Sync(),
+        localAddress: internalIpV4Sync(),  // localhost IP address
         localPort: userDefinedListenerPort
     };
 
@@ -55,7 +55,7 @@ const advertiseService = dnssd.Advertisement (
     options.localPort,
     {
         name: 'osc4ws' ,
-        host: options.localAddress
+        host: options.localAddress,
     }).start();
 
 
