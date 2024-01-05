@@ -37,3 +37,6 @@ Send OSC data from a client or device to your local listen IP address and port<b
 eg : `172.20.10.2:9005`
 
 This [video tutorial](https://www.youtube.com/watch?v=1cIhDfrHM74&feature=youtu.be) shows the whole process for the original [osc2ws](https://github.com/pandrr/osc2ws) version sending OSC into [Cables.gl](https://dev.cables.gl) <br>
+
+## Test
+Here is a test patch using Cables.GL. You'll need to open in the Cables editor to configure. https://cables.gl/p/wElA7W
